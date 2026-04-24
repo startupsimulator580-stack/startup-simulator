@@ -789,7 +789,7 @@ export default function StartupSimulatorPreview() {
       preview.push(current);
       const firstChoice = nodes[current].choices?.[0];
       if (!firstChoice || String(firstChoice.next).startsWith('MINIGAME_')) break;
-      current = firstChoice.next;
+      current = firstChoice.next as string;
       guard += 1;
     }
     return preview;
