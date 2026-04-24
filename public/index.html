@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Startup Simulator — Build Your Startup Empire</title>
+
+<meta name="description" content="Startup Simulator is a retro pixel-art strategy game. Play free in your browser and build your startup empire.">
+<meta property="og:type"        content="website">
+<meta property="og:url"         content="https://startupsimulator.xyz/">
+<meta property="og:title"       content="Startup Simulator — Build Your Startup Empire">
+<meta property="og:description" content="Hire devs. Ship products. Burn VC money. Survive the market. Become a tech legend.">
+
+<script>(function(){try{if(localStorage.getItem('startup-sim-crt')==='off'){document.documentElement.dataset.crtOff='1';}}catch(e){}})()</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+<style>
+  /* ─── STYLES DE BASE ─── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pixel-green:  #39ff14;
+    --pixel-yellow: #ffe600;
+    --pixel-blue:   #00cfff;
+    --pixel-red:    #ff3c3c;
+    --bg-dark:  #0a0a1a;
+    --bg-card:  #161630;
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-vt:    'VT323', monospace;
+  }
+
+  body {
+    background: var(--bg-dark);
+    color: #e0e0e0;
+    font-family: var(--font-vt);
+    font-size: 20px;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ─── EFFETS CRT ET SCANLINES ─── */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none; z-index: 9999; transition: opacity 0.3s;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none; z-index: 9998; transition: opacity 0.3s;
+  }
+  body.crt-off::before, [data-crt-off] body::before { opacity: 0; }
+  body.crt-off::after, [data-crt-off] body::after { opacity: 0; }
+
+  /* ─── NAVIGATION ─── */
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 60px; border-bottom: 3px solid var(--pixel-green);
+    background: rgba(10,10,26,0.96); backdrop-filter: blur(4px);
+    position: sticky; top: 0; z-index: 1000;
+  }
+  .nav-logo {
+    font-family: var(--font-pixel); font-size: 10px; color: var(--pixel-green);
+    text-shadow: 0 0 12px var(--pixel-green); text-decoration: none; line-height: 1.8;
+  }
+  .nav-links { display: flex; gap: 20px; list-style: none; align-items: center; }
+
+  /* ─── SYSTÈME DE BOUTONS ─── */
+  .btn {
+    font-family: var(--font-pixel); font-size: 7px;
+    padding: 10px 18px; cursor: pointer; text-decoration: none;
+    display: inline-block; transition: transform 0.1s, box-shadow 0.1s;
+    color: #000; border: none;
+  }
+  .btn:hover { transform: translate(-2px, -2px); }
+
+  .btn-green { background: var(--pixel-green); box-shadow: 3px 3px 0 #1a7a00; }
+  .btn-green:hover { box-shadow: 5px 5px 0 #1a7a00; }
+
+  .btn-blue { background: var(--pixel-blue); box-shadow: 3px 3px 0 #008eb0; }
+  .btn-blue:hover { box-shadow: 5px 5px 0 #008eb0; }
+
+  .btn-yellow { background: var(--pixel-yellow); box-shadow: 3px 3px 0 #b2a100; }
+  .btn-yellow:hover { box-shadow: 5px 5px 0 #b2a100; }
+
+  /* ─── BOUTON PLAY NOW HERO ─── */
+  .btn-play-hero {
+    font-family: var(--font-pixel); font-size: 12px;
+    padding: 20px 40px; cursor: pointer; text-decoration: none;
+    display: inline-block; transition: transform 0.1s, box-shadow 0.1s;
+    color: #000; border: none;
+    background: var(--pixel-green);
+    box-shadow: 6px 6px 0 #1a7a00;
+    margin-bottom: 40px;
+    animation: pulse 2s infinite;
+  }
+  .btn-play-hero:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0 #1a7a00;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 6px 6px 0 #1a7a00; }
+    50% { box-shadow: 6px 6px 20px rgba(57,255,20,0.5), 6px 6px 0 #1a7a00; }
+  }
+
+  .crt-toggle {
+    font-family: var(--font-pixel); font-size: 6px; background: none;
+    color: #3a3a5a; border: 2px solid #222; padding: 7px 12px; cursor: pointer;
+  }
+
+  /* ─── SECTION HERO ─── */
+  .hero {
+    flex-grow: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 60px 40px; position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: -1;
+    background-image: linear-gradient(rgba(57,255,20,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(57,255,20,0.06) 1px, transparent 1px);
+    background-size: 40px 40px; animation: gridPan 20s linear infinite;
+  }
+  @keyframes gridPan { 100% { background-position: 40px 40px; } }
+
+  .hero-title {
+    font-family: var(--font-pixel); font-size: clamp(20px, 4vw, 40px); color: #fff;
+    text-shadow: 4px 4px 0 var(--pixel-green), 8px 8px 0 rgba(57,255,20,0.18);
+    margin-bottom: 40px;
+  }
+
+  /* ─── FORMULAIRE NEWSLETTER ─── */
+  .newsletter-wrap { width: 100%; max-width: 500px; position: relative; z-index: 10; }
+  #newsletterForm { display: flex; gap: 10px; }
+  #newsEmail {
+    flex-grow: 1; padding: 15px; background: #000; border: 2px solid var(--pixel-green);
+    color: #fff; font-family: var(--font-vt); font-size: 20px; outline: none;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 40px 60px;
+    border-top: 1px solid rgba(57,255,20,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #050510;
+  }
+  .footer-link {
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: var(--pixel-yellow);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    padding: 5px;
+  }
+  .footer-link:hover {
+    color: #fff;
+    text-shadow: 0 0 8px var(--pixel-yellow);
+  }
+  .copyright {
+    font-family: var(--font-pixel);
+    font-size: 6px;
+    color: #444;
+  }
+
+  /* ─── SPLASH SCREEN ─── */
+  #splash {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #0a0a1a;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  .splash-logo {
+    font-family: var(--font-pixel); font-size: clamp(14px, 3vw, 24px);
+    color: var(--pixel-green);
+    text-shadow: 0 0 20px var(--pixel-green);
+    text-align: center; line-height: 2; margin-bottom: 40px;
+    animation: splashPulse 1s infinite;
+  }
+  @keyframes splashPulse {
+    0%, 100% { text-shadow: 0 0 20px var(--pixel-green); }
+    50% { text-shadow: 0 0 40px var(--pixel-green), 0 0 80px var(--pixel-green); }
+  }
+  .splash-bar-wrap {
+    width: 300px; height: 12px;
+    border: 2px solid var(--pixel-green);
+    background: #000;
+  }
+  .splash-bar {
+    height: 100%; width: 0%;
+    background: var(--pixel-green);
+    transition: width 1.5s ease;
+    box-shadow: 0 0 10px var(--pixel-green);
+  }
+  .splash-text {
+    font-family: var(--font-pixel); font-size: 7px;
+    color: #3a3a5a; margin-top: 15px; letter-spacing: 2px;
+  }
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+</head>
+<body class="crt-on">
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash">
+    <div class="splash-logo">STARTUP<br>SIMULATOR</div>
+    <div class="splash-bar-wrap"><div class="splash-bar" id="splashBar"></div></div>
+    <div class="splash-text">BOOTING EMPIRE...</div>
+  </div>
+
+
+  <nav>
+    <a href="#" class="nav-logo">STARTUP<br>SIMULATOR</a>
+    
+    <ul class="nav-links">
+      <li><a href="how-to-play.html" class="btn btn-blue">HOW TO PLAY</a></li>
+      <li><a href="leaderboard.html" class="btn btn-yellow">LEADERBOARD</a></li>
+    </ul>
+
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button class="crt-toggle" id="crtToggle">CRT: ON</button>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <div class="hero-grid"></div>
+
+    <!-- PLAY NOW centré au-dessus du titre -->
+    <a href="https://game.startupsimulator.xyz" target="_blank" rel="noopener noreferrer" class="btn-play-hero">
+      ▶ PLAY NOW
+    </a>
+
+    <h1 class="hero-title">BUILD YOUR<br><span style="color:var(--pixel-green)">STARTUP EMPIRE</span></h1>
+    
+    <div class="newsletter-wrap">
+      <form id="newsletterForm">
+        <input type="email" id="newsEmail" placeholder="ENTER EMAIL FOR UPDATES" required>
+        <button type="submit" class="btn btn-green">JOIN</button>
+      </form>
+      <div id="newsStatus" style="font-family:var(--font-pixel); font-size:7px; margin-top:15px; color:var(--pixel-green);"></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="copyright">© 2026 STARTUP SIMULATOR LABS</div>
+    <a href="https://www.instagram.com/startup_simulator/" target="_blank" rel="noopener noreferrer" class="footer-link">
+      FOLLOW ON INSTAGRAM _
+    </a>
+  </footer>
+
+  <script>
+    const body = document.body;
+    const crtBtn = document.getElementById('crtToggle');
+    function updateCRT(isOff) {
+      if (isOff) {
+        body.classList.add('crt-off');
+        document.documentElement.dataset.crtOff = '1';
+        crtBtn.textContent = 'CRT: OFF';
+        localStorage.setItem('startup-sim-crt', 'off');
+      } else {
+        body.classList.remove('crt-off');
+        delete document.documentElement.dataset.crtOff;
+        crtBtn.textContent = 'CRT: ON';
+        localStorage.setItem('startup-sim-crt', 'on');
+      }
+    }
+    crtBtn.addEventListener('click', () => updateCRT(!body.classList.contains('crt-off')));
+    if (localStorage.getItem('startup-sim-crt') === 'off') updateCRT(true);
+
+    const form = document.getElementById('newsletterForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('newsEmail').value;
+      const status = document.getElementById('newsStatus');
+      status.style.color = 'var(--pixel-green)';
+      status.textContent = 'LOADING...';
+
+      try {
+        const response = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        if (response.ok) {
+          status.textContent = '✓ WELCOME TO THE EMPIRE.';
+          document.getElementById('newsEmail').value = '';
+        } else {
+          status.style.color = 'var(--pixel-red)';
+          status.textContent = '✗ ERROR. TRY AGAIN.';
+        }
+      } catch (error) {
+        status.style.color = 'var(--pixel-red)';
+        status.textContent = '✗ ERROR. TRY AGAIN.';
+      }
+    });
+
+    // Splash screen
+    const splash = document.getElementById('splash');
+    const bar = document.getElementById('splashBar');
+    setTimeout(() => { bar.style.width = '100%'; }, 100);
+    setTimeout(() => { splash.classList.add('hidden'); }, 1800);
+    setTimeout(() => { splash.style.display = 'none'; }, 2400);
+  </script>
+</body>
+</html>

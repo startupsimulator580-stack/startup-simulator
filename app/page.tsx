@@ -1,6 +1,4 @@
-"use client";
-import StartupSimulatorPreview from "@/components/StartupSimulator";
-
+import { redirect } from 'next/navigation';
 export default function Home() {
-  return <StartupSimulatorPreview />;
+  redirect('/game');
 }
